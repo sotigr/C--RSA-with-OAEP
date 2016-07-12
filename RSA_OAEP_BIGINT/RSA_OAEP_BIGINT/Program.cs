@@ -11,7 +11,10 @@ namespace RSA_OAEP_BIGINT
 {
     static class Program
     {
-
+        //static int prime_length = 256;  //---- RSA 512
+        static int prime_length = 512;  //---- RSA 1024
+        //static int prime_length = 1024; //---- RSA 2048
+        //static int prime_length = 2048; //---- RSA 4096
         static void Main(string[] args)
         {
             Console.WriteLine("Please wait.....");
@@ -21,8 +24,8 @@ namespace RSA_OAEP_BIGINT
 
             BigInteger p, q, n, phi, e, d;
 
-            p = GenerateRandomPrime(768);
-            q = GenerateRandomPrime(768);
+            p = GenerateRandomPrime(prime_length);
+            q = GenerateRandomPrime(prime_length);
 
             n = p * q;
 
@@ -33,38 +36,58 @@ namespace RSA_OAEP_BIGINT
                 e = GenerateRandomCoprime(phi);
                 d = ExtendedEuclidean(e % phi, phi).u1;
             } while (d < 0);
-            
+
             Console.WriteLine("\np = " + p.ToString());
             Console.WriteLine("\nq = " + q.ToString());
             Console.WriteLine("\nn = " + n.ToString());
+            Console.WriteLine("\nKey bits = " + n.ToByteArray().Length * 8);
             Console.WriteLine("\nphi = " + phi.ToString());
             Console.WriteLine("\ne = " + e.ToString());
             Console.WriteLine("\nd = " + d.ToString());
             Console.WriteLine("\n---------------------------------------------------------------------\n");
 
-            timer.Stop();
-            Console.WriteLine(timer.ElapsedMilliseconds + "ms\n");
-            timer.Reset();
-              
-            Console.Write("Message: ");
-            byte[] message = Encoding.UTF8.GetBytes(Console.ReadLine());
-            int message_length = message.Length;
-
-
-            BigInteger[] encrtypted = Encrypt(ApplyOAEP(message, "SHA-256 MGF1", message_length + 32 + 32 + 1), e, n);
-           
-            Console.WriteLine("\nEncrypted message raw: ");
-            foreach (BigInteger intg in encrtypted)
+            bool procced = true;
+            if (n.ToByteArray().Length * 8 != prime_length * 2)
             {
-                Console.Write(intg.ToString());
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error with big prime detection...");
+                Console.ReadLine();
+                procced = false;
             }
-            Console.WriteLine();
+            if (procced)
+            {
+                timer.Stop();
+                Console.WriteLine(timer.ElapsedMilliseconds + "ms\n");
+                timer.Reset();
 
-            byte[] decrtypted = RemoveOAEP(Decrypt(encrtypted, d, n), "SHA-256 MGF1");
+                string input;
 
-            Console.WriteLine("\nDecrypted message: " + Encoding.UTF8.GetString(decrtypted));
-        
-            Console.ReadLine();
+                do { 
+                    Console.Write("Message: ");
+                    input = Console.ReadLine();
+                    Console.WriteLine();
+                } while (input.Trim() == "");
+              
+                byte[] message = Encoding.UTF8.GetBytes(input);
+                
+                int message_length = message.Length;
+
+
+                BigInteger[] encrtypted = Encrypt(ApplyOAEP(message, "SHA-256 MGF1", message_length + 32 + 32 + 1), e, n);
+
+                Console.WriteLine("\nEncrypted message raw: ");
+                foreach (BigInteger intg in encrtypted)
+                {
+                    Console.Write(intg.ToString());
+                }
+                Console.WriteLine();
+
+                byte[] decrtypted = RemoveOAEP(Decrypt(encrtypted, d, n), "SHA-256 MGF1");
+
+                Console.WriteLine("\nDecrypted message: " + Encoding.UTF8.GetString(decrtypted));
+
+                Console.ReadLine();
+            }
         }
         static BigInteger[] Encrypt(byte[] plaintext, BigInteger e, BigInteger n)
         {
@@ -227,7 +250,7 @@ namespace RSA_OAEP_BIGINT
             BigInteger resault = BigInteger.Zero;
             while (!found)
             {
-                resault = GenerateRandomPrime(700, 10);
+                resault = GenerateRandomPrime(prime_length - 1, 10);
                 if (Coprime(number, resault))
                     found = true;
             }
