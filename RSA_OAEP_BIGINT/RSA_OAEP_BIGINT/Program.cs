@@ -11,7 +11,8 @@ namespace RSA_OAEP_BIGINT
 {
     static class Program
     {
-        //static int prime_length = 256;  //---- RSA 512
+        //static int prime_length = 128;  //---- RSA 256 
+        //static int prime_length = 256;  //---- RSA 512 
         static int prime_length = 512;  //---- RSA 1024
         //static int prime_length = 1024; //---- RSA 2048
         //static int prime_length = 2048; //---- RSA 4096
@@ -24,6 +25,8 @@ namespace RSA_OAEP_BIGINT
 
             BigInteger p, q, n, phi, e, d;
 
+            Console.WriteLine("Searching for prime numbers...");
+
             p = GenerateRandomPrime(prime_length);
             q = GenerateRandomPrime(prime_length);
 
@@ -31,6 +34,7 @@ namespace RSA_OAEP_BIGINT
 
             phi = (p - 1) * (q - 1);
 
+            Console.WriteLine("Generating keys...");
             do
             {
                 e = GenerateRandomCoprime(phi);
@@ -44,6 +48,15 @@ namespace RSA_OAEP_BIGINT
             Console.WriteLine("\nphi = " + phi.ToString());
             Console.WriteLine("\ne = " + e.ToString());
             Console.WriteLine("\nd = " + d.ToString());
+
+            timer.Stop();
+
+            Console.Write("\nTime elapsed: ");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Write(timer.ElapsedMilliseconds + " ms\n");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            timer.Reset();
+
             Console.WriteLine("\n---------------------------------------------------------------------\n");
 
             bool procced = true;
@@ -55,24 +68,19 @@ namespace RSA_OAEP_BIGINT
                 procced = false;
             }
             if (procced)
-            {
-                timer.Stop();
-                Console.WriteLine(timer.ElapsedMilliseconds + "ms\n");
-                timer.Reset();
-
-                string input;
-
-                do { 
+            { 
+                string input; 
+                do
+                {
                     Console.Write("Message: ");
                     input = Console.ReadLine();
                     Console.WriteLine();
                 } while (input.Trim() == "");
-              
+
                 byte[] message = Encoding.UTF8.GetBytes(input);
-                
+
                 int message_length = message.Length;
-
-
+                 
                 BigInteger[] encrtypted = Encrypt(ApplyOAEP(message, "SHA-256 MGF1", message_length + 32 + 32 + 1), e, n);
 
                 Console.WriteLine("\nEncrypted message raw: ");
@@ -427,16 +435,14 @@ namespace RSA_OAEP_BIGINT
     }
 
     public static class PrimeExtensions
-    {
-        // Random generator (thread safe)
+    { 
         private static ThreadLocal<Random> s_Gen = new ThreadLocal<Random>(
           () =>
           {
               return new Random();
           }
         );
-
-        // Random generator (thread safe)
+         
         private static Random Gen
         {
             get
